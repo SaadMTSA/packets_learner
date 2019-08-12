@@ -2,14 +2,15 @@ name: packet_learner
 dependencies:
     - pip
     - pip:
-        -numpy=1.17.0
-        -pandas=0.24.2
-        -tensorflow=1.13.1
-        -keras=2.2.4
-        -sklearn=0.20.3
-        -scikitplot=0.3.7
-        -matplotlib=3.0.3
-        -click=7.0
+        -numpy==1.17.0
+        -pandas==0.24.2
+        -tensorflow==1.13.1
+        -keras==2.2.4
+        -sklearn==0.20.3
+        -xgboost==0.90
+        -scikitplot==0.3.7
+        -matplotlib==3.0.3
+        -click==7.0
         -pickle
         -pathlib
         
