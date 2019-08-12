@@ -1,2 +1,9 @@
+test.ipynb
 **/.ipynb_checkpoints
 **/__pycache__
+/data
+/attacks_ml
+/david_dir
+/packets_learner.egg-info
+/processing
+/output
