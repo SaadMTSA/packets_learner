@@ -26,6 +26,9 @@ def preprocess_pcap_data(data, label_col):
     return data
 
 def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize, poly):
+    if forward_predict < 1:
+        raise ValueError(f"forward_predict should be > 0, {forward_predict} was given!")
+        
     preprocess_features = Pipeline(
         steps=[
             ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
@@ -59,6 +62,9 @@ def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize,
 
 
 def prepare_pcap_sequantial_data(data, seq_len, forward_predict, standardize, poly):
+    if forward_predict < 1:
+        raise ValueError(f"forward_predict should be > 0, {forward_predict} was given!")
+        
     preprocess_features = Pipeline(
         steps=[
             ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
@@ -80,7 +86,7 @@ def prepare_pcap_sequantial_data(data, seq_len, forward_predict, standardize, po
             ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1), validate=True)),
             ("Encoding", OneHotEncoder(sparse=False)),
             ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)), validate=True)),            
-            ("Align", FunctionTransformer(lambda x: x[forward_predict:, -1, :].reshape(-1, 2), validate=False)),
+            ("Align", FunctionTransformer(lambda x: x[forward_predict:, 0, :].reshape(-1, 2), validate=False)),
         ]
     )
     

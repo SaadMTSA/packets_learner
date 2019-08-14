@@ -75,7 +75,7 @@ def train_rnn_models(
         x, y = prepare_netflow_sequantial_data(data, rnn_seq, forward_predict, standardize, poly)
     else:
         x, y = prepare_pcap_sequantial_data(data, rnn_seq, forward_predict, standardize, poly)
-        
+    print(x.shape)
     x_tr, x_te, y_tr, y_te = split_data(x, y, test_set_size, random_seed)
 
     mapper = {

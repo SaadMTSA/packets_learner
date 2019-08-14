@@ -86,9 +86,9 @@ def train_models(
         cur_output_dir = create_directory(output_directory / cur_scenario)
         
         LOGGER.info(f"Evaluating {model_name} on the test set ...")
-        model.evaluate(x_te, y_te, output_directory)
+        model.evaluate(x_te, y_te, cur_output_dir)
 
         LOGGER.info(f"Saving {model_name} to pickle file ...")
-        model.pickle_model(output_directory)
+        model.pickle_model(cur_output_dir)
 
     LOGGER.info("Done training all the models.")

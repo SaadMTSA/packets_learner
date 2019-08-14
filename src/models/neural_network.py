@@ -71,6 +71,7 @@ class GRUModel(BaseModel):
         self.model = model
     
     def fit(self, x_tr, y_tr, x_te, y_te, epochs, batch_size):
+        self.X = x_tr
         return self.model.fit([x_tr], y_tr, epochs=epochs, batch_size=batch_size, validation_data=([x_te], y_te))       
         
     def predict(self, x):
