@@ -4,7 +4,7 @@ import click
 from glob import glob
 import logging as LOGGER
 
-from data import create_directory
+from src.data.data import create_directory
 
 LOGGER.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=LOGGER.INFO)
 

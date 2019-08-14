@@ -25,23 +25,29 @@ def preprocess_pcap_data(data, label_col):
     data[label_col] = data[label_col].map({True: 1, False: 0})
     return data
 
-def prepare_netflow_sequantial_data(data, seq_len):
+def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize, poly):
     preprocess_features = Pipeline(
         steps=[
-            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1])),
-            ("Scaling", StandardScaler()),
-            ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)),
-            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])))),
-            ("Align", FunctionTransformer(lambda x: x[:-1], validate=False)),
+            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
+            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])), validate=True)),
+            ("Align", FunctionTransformer(lambda x: x[:-forward_predict], validate=False)),
         ]
     )
-    
+
+    if standardize:
+        preprocess_features.steps.insert(1, ("Scaling", StandardScaler()))
+        
+    if poly:
+        preprocess_features.steps.insert(1, ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)))
+        
+
+
     preprocess_labels = Pipeline(
         steps=[
-            ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1))),
+            ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1), validate=True)),
             ("Encoding", OneHotEncoder(sparse=False)),
-            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)))),            
-            ("Align", FunctionTransformer(lambda x: x[1:, -1, :].reshape(-1, 2), validate=False)),
+            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)), validate=True)),            
+            ("Align", FunctionTransformer(lambda x: x[forward_predict:, -1, :].reshape(-1, 2), validate=False)),
         ]
     )
     
@@ -52,23 +58,29 @@ def prepare_netflow_sequantial_data(data, seq_len):
 
 
 
-def prepare_pcap_sequantial_data(data, seq_len):
+def prepare_pcap_sequantial_data(data, seq_len, forward_predict, standardize, poly):
     preprocess_features = Pipeline(
         steps=[
-            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1])),
-            ("Scaling", StandardScaler()),
-            ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)),
-            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])))),
-            ("Align", FunctionTransformer(lambda x: x[:-1], validate=False)),
+            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
+            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])), validate=True)),
+            ("Align", FunctionTransformer(lambda x: x[:-forward_predict], validate=False)),
         ]
     )
-    
+
+    if standardize:
+        preprocess_features.steps.insert(1, ("Scaling", StandardScaler()))
+        
+    if poly:
+        preprocess_features.steps.insert(1, ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)))
+        
+
+
     preprocess_labels = Pipeline(
         steps=[
-            ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1))),
+            ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1), validate=True)),
             ("Encoding", OneHotEncoder(sparse=False)),
-            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)))),            
-            ("Align", FunctionTransformer(lambda x: x[1:, -1, :].reshape(-1, 2), validate=False)),
+            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)), validate=True)),            
+            ("Align", FunctionTransformer(lambda x: x[forward_predict:, -1, :].reshape(-1, 2), validate=False)),
         ]
     )
     

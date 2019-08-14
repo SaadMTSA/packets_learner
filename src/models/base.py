@@ -7,7 +7,7 @@ import pickle
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, average_precision_score, log_loss
 from skopt import BayesSearchCV
 
-from data.data import create_directory
+from src.data.data import create_directory
 
 class BaseModel():
     def __init__(self):
@@ -38,15 +38,12 @@ class BaseModel():
         Evaluate Model regarding performance metrics
         and some performance-measuring plots
         """
-        y_pred_prob = self.predict_proba(x)
         y_pred = self.predict(x)
-
-        output_directory = output_directory / self.__class__.__name__
-        output_directory = create_directory(output_directory)
+        y_pred_prob = self.predict_proba(x)
         
         # Metrics
         metrics = {}
-        metrics['model'] = self.__class__.__name__
+        metrics['model'] = output_directory.stem
         metrics['f1'] = f1_score(y_true, y_pred)
         metrics['precision'] = precision_score(y_true, y_pred)
         metrics['recall'] = recall_score(y_true, y_pred)
@@ -87,7 +84,5 @@ class BaseModel():
             plt.close()
     def pickle_model(self, output_directory):
         if self.model is not None:
-            output_directory = output_directory / self.__class__.__name__
-            output_directory = create_directory(output_directory)
             pickle.dump(self.model, open(output_directory / 'model.pickle', 'wb'))
         

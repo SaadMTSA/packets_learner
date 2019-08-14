@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import click
 from functools import partial
 import logging as LOGGER
-from data import (
+from src.data.data import (
     create_directory,
     split_data,
     preprocess_netflow_data,
     preprocess_pcap_data,
 )
 
-from models import RandomForestModel, XGBoostModel, LogisticRegressionModel, RNNModel
+from src.models import RandomForestModel, XGBoostModel, LogisticRegressionModel, RNNModel
 
 LOGGER.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=LOGGER.INFO)
 click.option = partial(click.option, show_default=True)
@@ -82,6 +82,9 @@ def train_models(
         LOGGER.info(f"Fitting {model_name} to the train set ...")
         model.fit(x_tr, y_tr)
 
+        cur_scenario = f"{packet_type}_{model_name}_{'fast' if fast else 'no-fast'}"
+        cur_output_dir = create_directory(output_directory / cur_scenario)
+        
         LOGGER.info(f"Evaluating {model_name} on the test set ...")
         model.evaluate(x_te, y_te, output_directory)
 
