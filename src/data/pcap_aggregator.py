@@ -72,10 +72,10 @@ def write_pcap_agg_scenario(scenario, window_size, output_file):
     """
     output_file = Path(output_file)
     if output_file.suffix == ".csv":
-        features_df = generate_pcap_agg_scenario(scenario)
+        features_df = generate_pcap_agg_scenario(scenario, window_size)
         features_df.to_csv(output_file, index=False)
     elif output_file.suffix == ".parquet":
-        features_df = generate_pcap_agg_scenario(scenario)
+        features_df = generate_pcap_agg_scenario(scenario, window_size)
         feature_df.to_parquet(
             output_file,
             index=False,
@@ -88,9 +88,9 @@ def write_pcap_agg_scenario(scenario, window_size, output_file):
 
 def generate_pcap_agg_scenario(scenario, window_size):
     mapper = {
-        "spam": NETFLOW_SPAM_FILES,
-        "ddos": NETFLOW_DDOS_FILES,
-        "irs": NETFLOW_IRS_FILES,
+        "spam": PCAP_SPAM_FILES,
+        "ddos": PCAP_DDOS_FILES,
+        "irs": PCAP_IRS_FILES,
     }
     if scenario not in mapper:
         raise ValueError(f"Unknown type '{scenario}'.")

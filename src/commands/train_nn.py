@@ -70,11 +70,15 @@ def train_rnn_models(
 
     LOGGER.info(f"Read {len(data)} records")
     LOGGER.info(f"Preparing training and testing data ...")
-    
-    if packet_type == 'netflow':
-        x, y = prepare_netflow_sequantial_data(data, rnn_seq, forward_predict, standardize, poly)
+
+    if packet_type == "netflow":
+        x, y = prepare_netflow_sequantial_data(
+            data, rnn_seq, forward_predict, standardize, poly
+        )
     else:
-        x, y = prepare_pcap_sequantial_data(data, rnn_seq, forward_predict, standardize, poly)
+        x, y = prepare_pcap_sequantial_data(
+            data, rnn_seq, forward_predict, standardize, poly
+        )
     print(x.shape)
     x_tr, x_te, y_tr, y_te = split_data(x, y, test_set_size, random_seed)
 
@@ -82,7 +86,7 @@ def train_rnn_models(
         "rnn": RNNModel,
         "lstm": LSTMModel,
         "gru": GRUModel,
-        "cstm1" : CustomNNModel,
+        "cstm1": CustomNNModel,
     }
 
     for model_name in model_list:
@@ -97,10 +101,10 @@ def train_rnn_models(
 
         LOGGER.info(f"Fitting {model_name} to the train set ...")
         model.fit(x_tr, y_tr, x_te, y_te, epochs, batch_size)
-        
-        cur_scenario = f"{packet_type}_{model_name}_{forward_predict}steps_{'std' if standardize else 'no-std'}_{'poly' if poly else 'no-poly'}"
+
+        cur_scenario = f"{packet_type}_{model_name}_{rnn_seq}seq-len_{forward_predict}steps_{'std' if standardize else 'no-std'}_{'poly' if poly else 'no-poly'}"
         cur_output_dir = create_directory(output_directory / cur_scenario)
-        
+
         LOGGER.info(f"Evaluating {model_name} on the test set ...")
         model.evaluate(x_te, np.argmax(y_te, axis=-1), cur_output_dir)
 
