@@ -34,6 +34,8 @@ click.option = partial(click.option, show_default=True)
     help="List of models to train",
 )
 @click.option("--fast", "fast", flag_value=True, default=False)
+@click.option("--predict", "predict", type=click.INT, default=0)
+@click.option("--transition", "transition", flag_value=True, default=False)
 def train_models(
     data_file,
     label_column,
@@ -43,6 +45,7 @@ def train_models(
     random_seed,
     model_list,
     fast,
+    predict,
 ):
     """ Trains multiple machine learning models for a specific datatable.
     """
@@ -56,10 +59,17 @@ def train_models(
     else:
         data = preprocess_pcap_data(data, label_column)
     
+    if transition:
+        d
+    
     LOGGER.info(f"Read {len(data)} records")
     LOGGER.info(f"Preparing training and testing data ...")
     
-    x, y = data.iloc[:, :-1], data.iloc[:, -1]
+    if predict != 0:
+        x, y = data.iloc[:-predict, :-1], data.iloc[predict:, -1]
+    else:
+        x, y = data.iloc[:, :-1], data.iloc[:, -1]
+    
     x_tr, x_te, y_tr, y_te = split_data(x, y, test_set_size, random_seed)
 
     mapper = {
@@ -82,7 +92,7 @@ def train_models(
         LOGGER.info(f"Fitting {model_name} to the train set ...")
         model.fit(x_tr, y_tr)
 
-        cur_scenario = f"{packet_type}_{model_name}_{'fast' if fast else 'no-fast'}"
+        cur_scenario = f"{packet_type}_{model_name}_{'fast' if fast else 'no-fast'}_{'predict' if predict else ''}"
         cur_output_dir = create_directory(output_directory / cur_scenario)
         
         LOGGER.info(f"Evaluating {model_name} on the test set ...")

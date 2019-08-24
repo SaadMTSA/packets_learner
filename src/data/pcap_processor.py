@@ -274,14 +274,14 @@ def process_pcap_to_csv(in_pcap, out_pcap, write_each):
     with open(out_pcap, "w") as file:
         file.writelines(",".join(header) + "\n")
         cnt = 0
-        to_write = [None] * count
+        to_write = [None] * write_each
         for p in tqdm(PcapReader(in_pcap), unit="packets"):
             to_write[cnt] = process_packet(p)
             if to_write[cnt] is None:
                 continue
             cnt += 1
-            if cnt % count == 0:
+            if cnt % write_each == 0:
                 file.writelines(to_write)
-                to_write = [None] * count
+                to_write = [None] * write_each
                 cnt = 0
     print("Done " + in_pcap)

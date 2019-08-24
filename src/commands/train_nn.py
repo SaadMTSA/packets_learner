@@ -106,7 +106,7 @@ def train_rnn_models(
         cur_output_dir = create_directory(output_directory / cur_scenario)
 
         LOGGER.info(f"Evaluating {model_name} on the test set ...")
-        model.evaluate(x_te, np.argmax(y_te, axis=-1), cur_output_dir)
+        model.evaluate(x_te, np.argmax(y_te, axis=-1), cur_output_dir, data.columns[:-1])
 
         LOGGER.info(f"Saving {model_name} to pickle file ...")
         model.pickle_model(cur_output_dir)

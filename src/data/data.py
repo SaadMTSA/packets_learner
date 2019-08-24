@@ -28,10 +28,11 @@ def preprocess_pcap_data(data, label_col):
 def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize, poly):
     if forward_predict < 1:
         raise ValueError(f"forward_predict should be > 0, {forward_predict} was given!")
-        
+
+    remove = len(data) % seq_len
     preprocess_features = Pipeline(
         steps=[
-            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
+            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1] if remove == 0 else x[:-remove, :-1], validate=True)),
             ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])), validate=True)),
             ("Align", FunctionTransformer(lambda x: x[:-forward_predict], validate=False)),
         ]
@@ -44,10 +45,9 @@ def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize,
         preprocess_features.steps.insert(1, ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)))
         
 
-
     preprocess_labels = Pipeline(
         steps=[
-            ("ExtractLabels", FunctionTransformer(lambda x: x[:, -1].reshape(-1,1), validate=True)),
+            ("ExtractLabels", FunctionTransformer(lambda x: (x[:, -1] if remove == 0 else x[:-remove, -1]).reshape(-1,1), validate=True)),
             ("Encoding", OneHotEncoder(sparse=False)),
             ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, 2)), validate=True)),            
             ("Align", FunctionTransformer(lambda x: x[forward_predict:, -1, :].reshape(-1, 2), validate=False)),
@@ -62,22 +62,7 @@ def prepare_netflow_sequantial_data(data, seq_len, forward_predict, standardize,
 
 
 def prepare_pcap_sequantial_data(data, seq_len, forward_predict, standardize, poly):
-    if forward_predict < 1:
-        raise ValueError(f"forward_predict should be > 0, {forward_predict} was given!")
-        
-    preprocess_features = Pipeline(
-        steps=[
-            ("ExtractFeatures", FunctionTransformer(lambda x: x[:, :-1], validate=True)),
-            ("Reshaping", FunctionTransformer(lambda x: x.reshape((-1, seq_len, x.shape[-1])), validate=True)),
-            ("Align", FunctionTransformer(lambda x: x[:-forward_predict], validate=False)),
-        ]
-    )
-
-    if standardize:
-        preprocess_features.steps.insert(1, ("Scaling", StandardScaler()))
-        
-    if poly:
-        preprocess_features.steps.insert(1, ("PolyFeatures", PolynomialFeatures(2, interaction_only=True)))
+    raise NotSupportedException("Implementation isn't done, yet!")
         
 
 

@@ -15,6 +15,7 @@ from sklearn.metrics import (
     log_loss,
 )
 from skopt import BayesSearchCV
+from scipy.stats import pearsonr
 
 from src.data.data import create_directory
 
@@ -44,11 +45,14 @@ class BaseModel:
             return self.model.predict_proba(x.values)
         raise NotImplementedError()
 
-    def evaluate(self, x, y_true, output_directory):
+    def evaluate(self, x, y_true, output_directory, cols=None):
         """
         Evaluate Model regarding performance metrics
         and some performance-measuring plots
         """
+        if cols is None:
+            cols = self.X.columns
+        
         y_pred = self.predict(x)
         y_pred_prob = self.predict_proba(x)
 
@@ -89,7 +93,7 @@ class BaseModel:
                 explainer = shap.TreeExplainer(self.model, self.X.values)
                 shap_values = explainer.shap_values(self.X.values)
                 shap.summary_plot(
-                    shap_values, self.X.values, self.X.columns, show=False
+                    shap_values, self.X.values, cols, show=False
                 )
                 pdf.savefig()
                 plt.close()
@@ -100,7 +104,7 @@ class BaseModel:
                 )
                 shap_values = explainer.shap_values(self.X.values)
                 shap.summary_plot(
-                    shap_values, self.X.values, self.X.columns, show=False
+                    shap_values, self.X.values, cols, show=False
                 )
                 pdf.savefig()
                 plt.close()
@@ -111,7 +115,19 @@ class BaseModel:
 #                 shap.summary_plot(shap_values, x[1:5], show=False)
 #                 pdf.savefig()
 #                 plt.close()
-                pass
+                
+                plt.figure(figsize=(15, 7))
+                plt.title('Feature-Target Pearson\'s Correlation')
+                corrs = [pearsonr(y_pred_prob[:, 1], col)[0] for col in x[:,0,:].transpose()]
+                col_corrs = pd.DataFrame({'cols' : cols, 'corrs':corrs, 'abs':np.abs(corrs)})
+                col_corrs = col_corrs.sort_values('abs', ascending=False)
+                rng = range(10)
+                plt.barh(rng, col_corrs.iloc[:10, 1].values[::-1])
+                plt.yticks(rng[::-1], col_corrs.iloc[:10, 0])
+                pdf.savefig()
+                plt.close()
+                
+                    
             skplt.metrics.plot_ks_statistic(y_true, y_pred_prob)
             pdf.savefig()
             plt.close()
