@@ -28,6 +28,7 @@ LOGGER.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=LOGGER.
 @click.option("-f", "--forward_predict", default=(1, 10), type=click.Tuple([int, int]))
 @click.option("-s", "--standardize", flag_value=True, default=False)
 @click.option("-p", "--poly", flag_value=True, default=False)
+@click.option("--transition", "transition", flag_value=True, default=False)
 def train_multiple(
     ctx,
     data_file,
@@ -43,6 +44,7 @@ def train_multiple(
     forward_predict,
     standardize,
     poly,
+    transition,
 ):
     for r in range(rnn_seq[0], rnn_seq[1]+1):
         for f in range(forward_predict[0], forward_predict[1]+1):
@@ -62,4 +64,5 @@ def train_multiple(
                 forward_predict=f,
                 standardize=standardize,
                 poly=poly,
+                transition=transition,
             )

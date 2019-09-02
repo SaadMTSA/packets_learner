@@ -46,6 +46,7 @@ def train_models(
     model_list,
     fast,
     predict,
+    transition,
 ):
     """ Trains multiple machine learning models for a specific datatable.
     """
@@ -55,12 +56,9 @@ def train_models(
 
     data = pd.read_csv(data_file)
     if packet_type == "netflow":
-        data = preprocess_netflow_data(data, label_column)
+        data = preprocess_netflow_data(data, label_column, transition)
     else:
         data = preprocess_pcap_data(data, label_column)
-    
-    if transition:
-        d
     
     LOGGER.info(f"Read {len(data)} records")
     LOGGER.info(f"Preparing training and testing data ...")

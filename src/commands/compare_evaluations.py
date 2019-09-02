@@ -34,21 +34,54 @@ def setup_metrics_table(metrics):
     metrics.sort_values(['network', 'seq_len', 'steps'])
     return metrics
 
-def _plot_nn(metrics, model, values, pdf):
-    data = metrics[metrics['model'].str.contains(model)]
-    if len(data) > 0:
-        for val in values:
-            neg_log_loss = data[['seq_len', 'steps', val]].pivot(index='seq_len', columns='steps', values=val)
-            plt.title(f"{model.upper()} - {val.upper()}")
-            sns.heatmap(neg_log_loss)
-            pdf.savefig()
-            plt.close()
+def _plot_nn(data, model, values, pdf):
+    if model is not None:
+        data = data[data['network'].str.contains(model)]
+        if len(data) > 0:
+            for val in values:
+#                 plot = data[['seq_len', 'steps', val]].pivot(index='seq_len', columns='steps', values=val)
+#                 plt.title(f"{model.upper()} - {val.upper()}")
+#                 sns.heatmap(plot)
+                plot = data[['seq_len', 'steps', val]].pivot(index='seq_len', columns='steps', values=val)
+                plt.title(f"{model.upper()} - {val.upper()}")
+                for col in plot:
+                    plt.plot(plot[col], label=f"{col} Step(s)")
+                plt.xlim(plot.index.min(), plot.index.max()*1.5)
+                rng = range(plot.index.min(), plot.index.max()+2, 2)
+                plt.xticks(rng, rng)
+                plt.xlabel('Sequence Length')
+                plt.ylabel(f"{val.upper()}")
+                plt.grid(True)
+                plt.legend(loc=1)
+                pdf.savefig()
+                plt.close()
+    else:
+        if len(data) > 0:
+            for val in values:
+#                 plot = data[['seq_len', 'steps', val]].pivot(index='seq_len', columns='steps', values=val)
+#                 plt.title(f"{model.upper()} - {val.upper()}")
+#                 sns.heatmap(plot)
+                data['myindex'] = data[['network', 'seq_len']].apply(lambda x: f"{x.network}_{x.seq_len}_", axis=1)
+                plot = data[['myindex', 'steps', val]].pivot(index = 'myindex', columns='steps', values=val)
+                for i in range(10):
+                    plt.title(f"ALL - {val.upper()} - {i+1} Sequence Length")
+                    for idx, row in plot[plot.index.str.contains(f"_{i+1}_")].iterrows():
+                        plt.plot(row, label=idx)
+                    plt.xlabel('Steps')
+                    plt.ylabel(f"{val.upper()}")
+                    plt.grid(True)
+                    plt.legend(loc='upper left')
+                    pdf.savefig()
+                    plt.close()
         
-def plot_nn_comps(metrics, pdf):
-    _plot_nn(metrics, 'gru', ['log_loss', 'f1', 'precision', 'recall', 'accuracy', 'average_precision'], pdf)
-    _plot_nn(metrics, 'lstm', ['log_loss', 'f1', 'precision', 'recall', 'accuracy', 'average_precision'], pdf)
-    _plot_nn(metrics, 'rnn', ['log_loss', 'f1', 'precision', 'recall', 'accuracy', 'average_precision'], pdf)
-    _plot_nn(metrics, 'cstm1', ['log_loss', 'f1', 'precision', 'recall', 'accuracy', 'average_precision'], pdf)
+        
+def plot_nn_comps(data, pdf):
+    metrics =  ['log_loss', 'f1', 'precision', 'recall', 'accuracy', 'average_precision']
+    _plot_nn(data, 'gru', metrics, pdf)
+    _plot_nn(data, 'lstm', metrics, pdf)
+    _plot_nn(data, 'rnn', metrics, pdf)
+    _plot_nn(data, 'cstm1', metrics, pdf)
+    _plot_nn(data, None, metrics, pdf)
     
 def _plot_ml(metrics, model, values, pdf):
     raise NotImplementedError()

@@ -41,6 +41,7 @@ click.option = partial(click.option, show_default=True)
 @click.option("--forward_predict", default=1, type=click.INT)
 @click.option("--standardize", "standardize", flag_value=True, default=False)
 @click.option("--poly", "poly", flag_value=True, default=False)
+@click.option("--transition", "transition", flag_value=True, default=False)
 def train_rnn_models(
     data_file,
     label_column,
@@ -55,6 +56,7 @@ def train_rnn_models(
     forward_predict,
     standardize,
     poly,
+    transition,
 ):
     """ Trains multiple machine learning models for a specific datatable.
     """
@@ -64,7 +66,7 @@ def train_rnn_models(
 
     data = pd.read_csv(data_file)
     if packet_type == "netflow":
-        data = preprocess_netflow_data(data, label_column)
+        data = preprocess_netflow_data(data, label_column, transition)
     else:
         data = preprocess_pcap_data(data, label_column)
 
@@ -102,7 +104,7 @@ def train_rnn_models(
         LOGGER.info(f"Fitting {model_name} to the train set ...")
         model.fit(x_tr, y_tr, x_te, y_te, epochs, batch_size)
 
-        cur_scenario = f"{packet_type}_{model_name}_{rnn_seq}seq-len_{forward_predict}steps_{'std' if standardize else 'no-std'}_{'poly' if poly else 'no-poly'}"
+        cur_scenario = f"{packet_type}_{model_name}_{rnn_seq}seq-len_{forward_predict}steps_{'std' if standardize else 'no-std'}_{'poly' if poly else 'no-poly'}_{'transition' if transition else ''}"
         cur_output_dir = create_directory(output_directory / cur_scenario)
 
         LOGGER.info(f"Evaluating {model_name} on the test set ...")

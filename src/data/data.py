@@ -10,13 +10,25 @@ from sklearn.preprocessing import (
 from sklearn.pipeline import Pipeline
 
 
-def preprocess_netflow_data(data, label_col):
+
+def _prepare_transition_data(data):
+    first = data.iloc[:-1,-1]
+    second = data.iloc[1:,-1]
+    label = first.values != second.values
+    data.iloc[1:,-1] = label
+    data.iloc[:,-1] = data.iloc[:,-1].apply(lambda x: 1 if x else 0)
+    return data.iloc[1:,:]
+
+
+def preprocess_netflow_data(data, label_col, transition):
     data = data.fillna(0, axis=None)
     data["n_background_rate"] = data["n_background"] / data["n_conn"]
     data["n_normal_rate"] = data["n_normal"] / data["n_conn"]
     data[label_col] = data["n_conn"] - data["n_background"] - data["n_normal"]
     data[label_col] = data[label_col].apply(lambda x: 1 if x > 0 else 0)
     data["n_background"] = data["n_conn"] - data["n_normal"]
+    if transition:
+        data = _prepare_transition_data(data)
     return data
 
 
@@ -79,7 +91,6 @@ def prepare_pcap_sequantial_data(data, seq_len, forward_predict, standardize, po
     y = preprocess_labels.fit_transform(data)
 
     return x, y
-
 
 def split_data(x, y, test_size, random_state):
     return train_test_split(x, y, test_size=test_size, random_state=random_state)
