@@ -5,7 +5,7 @@ from skopt import BayesSearchCV
 class LogisticRegressionModel(BaseModel):
     def __init__(self, random_state, fast=False):
         if fast:
-            self.model = LogisticRegression(random_state=random_state)
+            self.model = LogisticRegression(random_state=random_state, solver='lbfgs')
         else:
             self.model = BayesSearchCV(
                 LogisticRegression(random_state=random_state),
@@ -14,8 +14,8 @@ class LogisticRegressionModel(BaseModel):
                     'solver' :['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'],
 
                 },
-                n_iter=100,
-                cv=3,
+                n_iter=10,
+                cv=10,
                 scoring='f1',
                 n_jobs=-1,
                 random_state=random_state

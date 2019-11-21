@@ -35,7 +35,8 @@ click.option = partial(click.option, show_default=True)
 )
 @click.option("--fast", "fast", flag_value=True, default=False)
 @click.option("--predict", "predict", type=click.INT, default=0)
-@click.option("--transition", "transition", flag_value=True, default=False)
+@click.option("--transition", "transition", type=click.INT, default=0)
+@click.option("--save", "save", flag_value=True, default=False)
 def train_models(
     data_file,
     label_column,
@@ -47,14 +48,20 @@ def train_models(
     fast,
     predict,
     transition,
+    save,
 ):
     """ Trains multiple machine learning models for a specific datatable.
     """
     output_directory = create_directory(output_directory)
     np.random.seed(random_seed)
     LOGGER.info(f"Reading {data_file} ...")
-
-    data = pd.read_csv(data_file)
+    if data_file.endswith('parquet'):
+        data = pd.read_parquet(data_file).dropna(how='all')
+    elif data_file.endswith('csv'):
+        data = pd.read_csv(data_file).dropna(how='all')
+    else:
+        raise NotImplementedError(f'Extension of {datafile} is not supported')
+        
     if packet_type == "netflow":
         data = preprocess_netflow_data(data, label_column, transition)
     else:
@@ -68,8 +75,7 @@ def train_models(
     else:
         x, y = data.iloc[:, :-1], data.iloc[:, -1]
     
-    x_tr, x_te, y_tr, y_te = split_data(x, y, test_set_size, random_seed)
-
+    x_tr, x_te, y_tr, y_te = split_data(x.values, y.values, test_set_size, random_seed, True if transition == 2 else False)
     mapper = {
         "random_forest": RandomForestModel,
         "xgboost": XGBoostModel,
@@ -90,13 +96,14 @@ def train_models(
         LOGGER.info(f"Fitting {model_name} to the train set ...")
         model.fit(x_tr, y_tr)
 
-        cur_scenario = f"{packet_type}_{model_name}_{'fast' if fast else 'no-fast'}_{'predict' if predict else ''}"
+        cur_scenario = f"{packet_type}_{model_name}_{'fast' if fast else 'no-fast'}_{predict}steps_{'transition' if transition else 'binary'}"
         cur_output_dir = create_directory(output_directory / cur_scenario)
         
         LOGGER.info(f"Evaluating {model_name} on the test set ...")
-        model.evaluate(x_te, y_te, cur_output_dir)
+        model.evaluate(x_te, y_te, cur_output_dir, data.columns[:-1], transition=transition)
 
-        LOGGER.info(f"Saving {model_name} to pickle file ...")
-        model.pickle_model(cur_output_dir)
+        if save:
+            LOGGER.info(f"Saving {model_name} to pickle file ...")
+            model.pickle_model(cur_output_dir)
 
     LOGGER.info("Done training all the models.")

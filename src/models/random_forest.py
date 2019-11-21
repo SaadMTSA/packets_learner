@@ -20,7 +20,7 @@ class RandomForestModel(BaseModel):
                     'min_samples_leaf': (100,1000),
                 },
                 n_iter=100,
-                cv=3,
+                cv=10,
                 scoring='f1',
                 n_jobs=-1,
                 random_state=random_state

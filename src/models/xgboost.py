@@ -25,7 +25,7 @@ class XGBoostModel(BaseModel):
                     'scale_pos_weight': (1e-4, 500, 'log-uniform')
                 },
                 n_iter=100,
-                cv=3,
+                cv=10,
                 scoring='average_precision',
                 n_jobs=-1,
                 random_state=random_state

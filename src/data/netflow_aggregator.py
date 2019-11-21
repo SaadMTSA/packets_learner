@@ -5,7 +5,7 @@ from tqdm import tqdm
 import click
 from scipy.stats import entropy
 from pathlib import Path
-import ray
+from joblib import Parallel, delayed
 import logging as LOGGER
 
 LOGGER.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=LOGGER.INFO)
@@ -30,7 +30,8 @@ NETFLOW_IRS_FILES = [
 @click.argument("scenario")
 @click.argument("window_size", type=click.FLOAT)
 @click.argument("output_file")
-def write_netflow_agg_scenario(scenario, window_size, output_file):
+@click.argument("n_jobs", type=click.INT)
+def write_netflow_agg_scenario(scenario, window_size, output_file, n_jobs):
     """
     Aggregates netflow data based upon a scenario and a window size.
     """
@@ -42,9 +43,9 @@ def write_netflow_agg_scenario(scenario, window_size, output_file):
         features_df.to_csv(output_file, index=False)
     elif output_file.suffix == ".parquet":
         LOGGER.info(f"Generating aggregated features for {scenario} scenario ...")
-        features_df = generate_netflow_agg_scenario(scenario, window_size)
+        features_df = generate_netflow_agg_scenario(scenario, window_size, n_jobs)
         LOGGER.info(f"Writing aggregated features to {output_file} ...")
-        feature_df.to_parquet(
+        features_df.to_parquet(
             output_file,
             index=False,
             engine="pyarrow",
@@ -56,7 +57,7 @@ def write_netflow_agg_scenario(scenario, window_size, output_file):
     LOGGER.info("Successfully done!")
 
 
-def generate_netflow_agg_scenario(scenario, window_size):
+def generate_netflow_agg_scenario(scenario, window_size, n_jobs):
     LOGGER.info(f"Reading {scenario} files ...")
     mapper = {
         "spam": NETFLOW_SPAM_FILES,
@@ -69,7 +70,7 @@ def generate_netflow_agg_scenario(scenario, window_size):
     for i in mapper[scenario]:
         LOGGER.info(f"Reading, Processing, and Aggregating {i} ...")
         features_df.append(
-            _aggregate_netflow(pd.read_csv(i, parse_dates=[0]), window_size)
+            _aggregate_netflow(pd.read_csv(i, parse_dates=[0]), window_size, n_jobs)
         )
     LOGGER.info(f"Concatenating results ...")
     features_df = pd.concat(features_df)
@@ -90,8 +91,10 @@ def _classify_ip(value):
         return 3
 
 
-def _aggregate_netflow(netflow, window_size):
+def _aggregate_netflow(netflow, window_size, n_jobs):
     LOGGER.info("Cleaning data ...")
+    netflow.Label = netflow.Label.str.lower()
+    netflow = netflow[netflow.Label.str.contains('botnet') | ~netflow.Label.str.contains('background')]
     netflow["StartTime"] = (
         netflow.StartTime - netflow.StartTime.min()
     ).dt.total_seconds()
@@ -122,23 +125,30 @@ def _aggregate_netflow(netflow, window_size):
     features_calculated = []
     in_parallel = 40
     results_ids = []
-    for window in tqdm(range(firstWindow, lastWindow + 1), unit="window"):
-        results_ids.append(
-            _aggregate_window(
-                netflow[
+    features_calculated = Parallel(n_jobs=n_jobs)(delayed(_aggregate_window)(netflow[
                     (netflow.StartWindow <= window) & (netflow.EndWindow >= window)
                 ],
                 window,
-                window_size,
-            )
-        )
+                window_size,) for window in tqdm(range(firstWindow, lastWindow + 1), unit="window"))
+#     for window in tqdm(range(firstWindow, lastWindow + 1), unit="window"):
+#         features_calculated.append(
+#             _aggregate_window(
+#                 netflow[
+#                     (netflow.StartWindow <= window) & (netflow.EndWindow >= window)
+#                 ],
+#                 window,
+#                 window_size,
+#             )
+#         )
     return pd.DataFrame(features_calculated)
 
 
 def _aggregate_window(flow, window, window_size):
+    if len(flow) == 0:
+        return {}
     features = {}
-    flow.loc[:, "isLast"] = flow.EndWindow == window
-    flow.loc[:, "CurrDur"] = flow.apply(
+    flow["isLast"] = flow.EndWindow == window
+    flow["CurrDur"] = flow[["FirstDur", "StartWindow", "LastDur", "isLast"]].apply(
         lambda x: x["FirstDur"]
         if x["StartWindow"] == window
         else x["LastDur"]
