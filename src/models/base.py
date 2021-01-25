@@ -100,6 +100,7 @@ class BaseModel:
         metrics["precision"] = precision_score(y_true.reshape(-1,), y_pred.reshape(-1,), average='macro')
         metrics["recall"] = recall_score(y_true.reshape(-1,), y_pred.reshape(-1,), average='macro')
         metrics["accuracy"] = accuracy_score(y_true.reshape(-1,), y_pred.reshape(-1,))
+        metrics["roc_auc"] = roc_auc_score(y_true, y_pred_prob[:,1])
         
 #         if transition == 0:
 #             metrics["au-roc"] = roc_auc_score(y_true, y_pred_prob[:,1], average='micro')

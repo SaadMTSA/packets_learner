@@ -41,7 +41,7 @@ def preprocess_netflow_data(data, label_col, transition, nn=False):
 #     data["n_background_rate"] = data["n_background"] / data["n_conn"]
 #     data["n_normal_rate"] = data["n_normal"] / data["n_conn"]
     data[label_col] = data["n_conn"] - data["n_normal"]
-    data = data.drop(columns='n_normal')
+#     data = data.drop(columns='n_normal')
     data[label_col] = data[label_col].apply(lambda x: 1 if x > 0 else 0)
     print(data[label_col].value_counts())
     data["n_background"] = data["n_conn"] - data["n_normal"]
